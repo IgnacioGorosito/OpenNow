@@ -1,0 +1,61 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1.5rem;
+  background: var(--navy);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.wordmark {
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: #fff;
+}
+
+.wordmark .now {
+  color: var(--teal-light);
+}
+
+nav {
+  display: flex;
+  gap: 0.4rem;
+}
+
+nav a {
+  color: #cfd8e6;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+}
+
+nav a:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+nav a.active {
+  background: #fff;
+  color: var(--navy);
+}
+
+.content {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}

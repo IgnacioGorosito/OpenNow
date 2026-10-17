@@ -1,1 +1,29 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700&display=swap');
+
+:root {
+  --navy: #0B2A4A;
+  --teal: #0B7F72;
+  --teal-light: #2DD4BF;
+  --bg: #F2F7FA;
+  --ink: #0B2239;
+  --muted: #3D5873;
+  --border: #D5E2EC;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Estado abierto / cerrado, se reutiliza en todos los roles */
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+.badge.open { background: #DCFCE7; color: #166534; }
+.badge.open .dot { background: #22C55E; }
+.badge.closed { background: #FEE2E2; color: #991B1B; }
+.badge.closed .dot { background: #EF4444; }

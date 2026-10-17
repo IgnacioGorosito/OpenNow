@@ -1,0 +1,76 @@
+<section>
+  <h1>Encontrá lo que está abierto ahora</h1>
+  <p class="sub">Farmacias, gomerías y más servicios de guardia, por localidad.</p>
+</section>
+
+<form class="filters" (ngSubmit)="load()">
+  <div class="field">
+    <label for="locality">Localidad</label>
+    <select id="locality" name="locality" [(ngModel)]="localityId">
+      <option [ngValue]="null">Todas</option>
+      @for (l of localities(); track l.id) {
+        <option [ngValue]="l.id">{{ l.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="category">Categoría</label>
+    <select id="category" name="category" [(ngModel)]="categoryId">
+      <option [ngValue]="null">Todas</option>
+      @for (c of categories(); track c.id) {
+        <option [ngValue]="c.id">{{ c.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field grow">
+    <label for="search">Buscar por nombre</label>
+    <input id="search" name="search" type="text" [(ngModel)]="search" placeholder="Ej: Farmacia" />
+  </div>
+
+  <label class="check" for="openNow">
+    <input id="openNow" name="openNow" type="checkbox" [(ngModel)]="openNow" />
+    Abierto ahora
+  </label>
+
+  <button type="submit" class="btn">Buscar</button>
+</form>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+<div class="results-head">
+  <h2>Resultados</h2>
+  <span>{{ places().length }} lugares</span>
+</div>
+
+@if (loading()) {
+  <p class="muted">Cargando…</p>
+}
+
+<div class="cards">
+  @for (p of places(); track p.id) {
+    <article class="card">
+      <div class="card-top">
+        <span class="chip">{{ p.category.name }}</span>
+        @if (p.is_open) {
+          <span class="badge open"><span class="dot"></span>Abierto</span>
+        } @else {
+          <span class="badge closed"><span class="dot"></span>Cerrado</span>
+        }
+      </div>
+      <h3>{{ p.name }}</h3>
+      <p class="line">{{ p.address }}</p>
+      <p class="line">{{ p.locality.name }}</p>
+      @if (p.phone) {
+        <p class="line">{{ p.phone }}</p>
+      }
+    </article>
+  } @empty {
+    @if (!loading()) {
+      <p class="muted">No hay lugares con esos filtros.</p>
+    }
+  }
+</div>
