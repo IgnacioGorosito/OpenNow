@@ -1,0 +1,67 @@
+<div class="auth">
+  <aside class="brand-panel">
+    <img src="logo-mark.svg" alt="" width="64" height="64" />
+    <h2>Encontrá lo que está abierto, justo cuando lo necesitás.</h2>
+    <ul>
+      <li>Farmacias, gomerías y más servicios de guardia</li>
+      <li>Horarios al día y distancia desde donde estás</li>
+      <li>Si tenés un negocio, cargalo y llegá a más gente</li>
+    </ul>
+  </aside>
+
+  <section class="form-panel">
+    <div class="switch">
+      <button type="button" [class.on]="mode() === 'login'" (click)="setMode('login')">Ingresar</button>
+      <button type="button" [class.on]="mode() === 'register'" (click)="setMode('register')">Crear cuenta</button>
+    </div>
+
+    <h1>{{ mode() === 'login' ? 'Bienvenido de nuevo' : 'Creá tu cuenta' }}</h1>
+    <p class="sub">
+      {{ mode() === 'login' ? 'Ingresá con tu email y contraseña.' : 'Elegí cómo vas a usar OpenNow.' }}
+    </p>
+
+    <form (ngSubmit)="submit()">
+      @if (mode() === 'register') {
+        <div class="roles">
+          <label class="role" [class.sel]="role === 'user'">
+            <input type="radio" name="role" value="user" [(ngModel)]="role" />
+            <strong>Busco servicios</strong>
+            <span>Usuario</span>
+          </label>
+          <label class="role" [class.sel]="role === 'owner'">
+            <input type="radio" name="role" value="owner" [(ngModel)]="role" />
+            <strong>Tengo un negocio</strong>
+            <span>Dueño</span>
+          </label>
+        </div>
+
+        <label>
+          Tu nombre o el de tu comercio
+          <input name="name" [(ngModel)]="name" autocomplete="name" />
+        </label>
+      }
+
+      <label>
+        Email
+        <input name="email" type="email" [(ngModel)]="email" autocomplete="email" />
+      </label>
+
+      <label>
+        Contraseña
+        <input name="password" type="password" [(ngModel)]="password" autocomplete="current-password" />
+      </label>
+
+      @if (error()) {
+        <p class="msg error">{{ error() }}</p>
+      }
+
+      <button type="submit" class="btn" [disabled]="loading()">
+        {{ loading() ? 'Un momento…' : mode() === 'login' ? 'Ingresar' : 'Crear cuenta' }}
+      </button>
+    </form>
+
+    @if (mode() === 'login') {
+      <p class="demo">Cuenta de administrador de prueba: <strong>admin&#64;opennow.com</strong> / <strong>admin123</strong></p>
+    }
+  </section>
+</div>

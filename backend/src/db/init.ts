@@ -1,8 +1,10 @@
 import { pool } from './pool';
+import * as bcrypt from 'bcryptjs';
 
 export async function initDB(): Promise<void> {
   const client = await pool.connect();
   try {
+    
     await client.query('BEGIN');
 
     // Categorías de servicios (farmacia, gomería, ferretería, etc.)
@@ -81,7 +83,27 @@ export async function initDB(): Promise<void> {
         ('Buenos Aires',  'Buenos Aires')
       ON CONFLICT (name, province) DO NOTHING;
     `);
+    // Usuarios del sistema (login)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id            SERIAL PRIMARY KEY,
+        name          VARCHAR(150) NOT NULL,
+        email         VARCHAR(200) NOT NULL UNIQUE,
+        password_hash VARCHAR(200) NOT NULL,
+        role          VARCHAR(10) NOT NULL DEFAULT 'user'
+                      CHECK (role IN ('user', 'owner', 'admin')),
+        created_at    TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
 
+    // Admin inicial para desarrollo (cambiar la contraseña antes de entregar a producción)
+    const adminHash = await bcrypt.hash('admin123', 10);
+    await client.query(
+      `INSERT INTO users (name, email, password_hash, role)
+       VALUES ('Administrador', 'admin@opennow.com', $1, 'admin')
+       ON CONFLICT (email) DO NOTHING`,
+      [adminHash]
+    );
     await client.query('COMMIT');
     console.log('✅ [OpenNow] Base de datos inicializada correctamente');
   } catch (err) {

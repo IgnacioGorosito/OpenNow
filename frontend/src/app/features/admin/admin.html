@@ -1,1 +1,126 @@
-<h2>Vista de Admin</h2>
+<section class="head">
+  <h1>Panel de administración</h1>
+  <p>Gestioná los lugares, las categorías y las localidades de OpenNow.</p>
+</section>
+
+<div class="tabs">
+  <button type="button" [class.active]="tab() === 'places'" (click)="setTab('places')">Lugares</button>
+  <button type="button" [class.active]="tab() === 'categories'" (click)="setTab('categories')">Categorías</button>
+  <button type="button" [class.active]="tab() === 'localities'" (click)="setTab('localities')">Localidades</button>
+</div>
+
+@if (error()) {
+  <p class="msg error">{{ error() }}</p>
+}
+@if (message()) {
+  <p class="msg ok">{{ message() }}</p>
+}
+
+@switch (tab()) {
+  @case ('places') {
+    <div class="card">
+      <h2>Lugares ({{ places().length }})</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Categoría</th><th>Localidad</th><th>Dueño</th><th>GPS</th><th>Estado</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of places(); track p.id) {
+              <tr>
+                <td><strong>{{ p.name }}</strong><br /><span class="muted">{{ p.address }}</span></td>
+                <td>{{ p.category_name }}</td>
+                <td>{{ p.locality_name }}</td>
+                <td>{{ p.owner_name ?? '—' }}</td>
+                <td>{{ p.latitude ? 'Sí' : 'No' }}</td>
+                <td>
+                  @if (p.is_enabled) {
+                    <span class="badge open">Habilitado</span>
+                  } @else {
+                    <span class="badge closed">Deshabilitado</span>
+                  }
+                </td>
+                <td class="actions">
+                  <button type="button" class="btn small ghost" (click)="togglePlace(p)">
+                    {{ p.is_enabled ? 'Deshabilitar' : 'Habilitar' }}
+                  </button>
+                  <button type="button" class="btn small danger" (click)="deletePlace(p)">Eliminar</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7" class="muted">No hay lugares cargados todavía.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  @case ('categories') {
+    <div class="grid">
+      <form class="card" (ngSubmit)="saveCategory()">
+        <h2>{{ catEditing ? 'Editar categoría' : 'Nueva categoría' }}</h2>
+        <label>Nombre *
+          <input name="catName" [(ngModel)]="catForm.name" />
+        </label>
+        <label>Ícono (opcional)
+          <input name="catIcon" [(ngModel)]="catForm.icon" placeholder="Ej: pill" />
+        </label>
+        <div class="actions">
+          <button type="submit" class="btn">{{ catEditing ? 'Guardar cambios' : 'Crear' }}</button>
+          @if (catEditing) {
+            <button type="button" class="btn ghost" (click)="cancelCategory()">Cancelar</button>
+          }
+        </div>
+      </form>
+
+      <div class="card">
+        <h2>Categorías ({{ categories().length }})</h2>
+        @for (c of categories(); track c.id) {
+          <div class="item">
+            <span>{{ c.name }} <span class="muted">{{ c.icon }}</span></span>
+            <span class="actions">
+              <button type="button" class="btn small ghost" (click)="editCategory(c)">Editar</button>
+              <button type="button" class="btn small danger" (click)="deleteCategory(c)">Eliminar</button>
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @case ('localities') {
+    <div class="grid">
+      <form class="card" (ngSubmit)="saveLocality()">
+        <h2>{{ locEditing ? 'Editar localidad' : 'Nueva localidad' }}</h2>
+        <label>Nombre *
+          <input name="locName" [(ngModel)]="locForm.name" />
+        </label>
+        <label>Provincia
+          <input name="locProvince" [(ngModel)]="locForm.province" />
+        </label>
+        <div class="actions">
+          <button type="submit" class="btn">{{ locEditing ? 'Guardar cambios' : 'Crear' }}</button>
+          @if (locEditing) {
+            <button type="button" class="btn ghost" (click)="cancelLocality()">Cancelar</button>
+          }
+        </div>
+      </form>
+
+      <div class="card">
+        <h2>Localidades ({{ localities().length }})</h2>
+        @for (l of localities(); track l.id) {
+          <div class="item">
+            <span>{{ l.name }} <span class="muted">{{ l.province }}</span></span>
+            <span class="actions">
+              <button type="button" class="btn small ghost" (click)="editLocality(l)">Editar</button>
+              <button type="button" class="btn small danger" (click)="deleteLocality(l)">Eliminar</button>
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+}

@@ -1,72 +1,122 @@
-<section>
-  <h1>Encontrá lo que está abierto ahora</h1>
-  <p class="sub">Farmacias, gomerías y más servicios de guardia, por localidad.</p>
+<section class="hero">
+  <span class="eyebrow">Servicios de guardia</span>
+  <h1>Encontrá lo que está <em>abierto ahora</em></h1>
+  <p>Farmacias, gomerías, ferreterías y más, con horarios al día y los más cercanos a vos.</p>
+
+  <form class="finder" (ngSubmit)="load()">
+    <div class="finder-row">
+      <label class="field">
+        Localidad
+        <select name="locality" [ngModel]="localityId" (ngModelChange)="localityId = $event; load()">
+          <option [ngValue]="null">Todas</option>
+          @for (l of localities(); track l.id) {
+            <option [ngValue]="l.id">{{ l.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="field grow">
+        Buscar por nombre
+        <input name="search" [(ngModel)]="search" placeholder="Ej: Farmacia Central" />
+      </label>
+      <button type="submit" class="btn">Buscar</button>
+    </div>
+
+    <div class="chips" role="group" aria-label="Categorías">
+      <button type="button" class="chip" [class.on]="categoryId === null" (click)="pickCategory(null)">Todas</button>
+      @for (c of categories(); track c.id) {
+        <button type="button" class="chip" [class.on]="categoryId === c.id" (click)="pickCategory(c.id)">
+          {{ c.name }}
+        </button>
+      }
+    </div>
+
+    <div class="finder-row options">
+      <label class="check">
+        <input type="checkbox" name="openNow" [ngModel]="openNow" (ngModelChange)="openNow = $event; load()" />
+        Solo abiertos ahora
+      </label>
+
+      <button
+        type="button"
+        class="near"
+        [class.on]="userPos()"
+        [disabled]="locating()"
+        (click)="userPos() ? clearLocation() : nearMe()"
+      >
+        {{ locating() ? 'Buscando tu ubicación…' : userPos() ? 'Ubicación activa · Quitar' : 'Cerca de mí' }}
+      </button>
+
+      @if (userPos()) {
+        <label class="field radius">
+          Hasta
+          <select name="radius" [ngModel]="radius()" (ngModelChange)="radius.set($event)">
+            <option [ngValue]="0">Sin límite</option>
+            <option [ngValue]="1">1 km</option>
+            <option [ngValue]="3">3 km</option>
+            <option [ngValue]="5">5 km</option>
+            <option [ngValue]="10">10 km</option>
+            <option [ngValue]="25">25 km</option>
+          </select>
+        </label>
+      }
+    </div>
+  </form>
 </section>
 
-<form class="filters" (ngSubmit)="load()">
-  <div class="field">
-    <label for="locality">Localidad</label>
-    <select id="locality" name="locality" [(ngModel)]="localityId">
-      <option [ngValue]="null">Todas</option>
-      @for (l of localities(); track l.id) {
-        <option [ngValue]="l.id">{{ l.name }}</option>
-      }
-    </select>
-  </div>
-
-  <div class="field">
-    <label for="category">Categoría</label>
-    <select id="category" name="category" [(ngModel)]="categoryId">
-      <option [ngValue]="null">Todas</option>
-      @for (c of categories(); track c.id) {
-        <option [ngValue]="c.id">{{ c.name }}</option>
-      }
-    </select>
-  </div>
-
-  <div class="field grow">
-    <label for="search">Buscar por nombre</label>
-    <input id="search" name="search" type="text" [(ngModel)]="search" placeholder="Ej: Farmacia" />
-  </div>
-
-  <label class="check" for="openNow">
-    <input id="openNow" name="openNow" type="checkbox" [(ngModel)]="openNow" />
-    Abierto ahora
-  </label>
-
-  <button type="submit" class="btn">Buscar</button>
-</form>
-
+@if (geoMsg()) {
+  <p class="msg error">{{ geoMsg() }}</p>
+}
 @if (error()) {
-  <p class="error">{{ error() }}</p>
+  <p class="msg error">{{ error() }}</p>
 }
 
 <div class="results-head">
   <h2>Resultados</h2>
-  <span>{{ places().length }} lugares</span>
+  <span class="count">{{ visible().length }} lugares</span>
 </div>
-
+@if (userPos()) {
+  <p class="hint">Ordenados del más cercano al más lejano. Para ver de todas las localidades, dejá Localidad en "Todas".</p>
+}
 @if (loading()) {
-  <p class="muted">Cargando…</p>
+  <p class="muted">Buscando…</p>
 }
 
 <div class="cards">
-  @for (p of places(); track p.id) {
+  @for (item of visible(); track item.place.id) {
     <article class="card">
       <div class="card-top">
-        <span class="chip">{{ p.category.name }}</span>
-        @if (p.is_open) {
-          <span class="badge open"><span class="dot"></span>Abierto</span>
+        <span class="cat">{{ item.place.category.name }}</span>
+        @if (item.place.is_open) {
+          <span class="badge open">Abierto</span>
         } @else {
-          <span class="badge closed"><span class="dot"></span>Cerrado</span>
+          <span class="badge closed">Cerrado</span>
         }
       </div>
-      <h3>{{ p.name }}</h3>
-      <p class="line">{{ p.address }}</p>
-      <p class="line">{{ p.locality.name }}</p>
-      @if (p.phone) {
-        <p class="line">{{ p.phone }}</p>
+
+      <h3>{{ item.place.name }}</h3>
+      <p class="loc">
+        {{ item.place.locality.name }}@if (item.place.address) { · {{ item.place.address }} }
+      </p>
+
+      @if (item.distance !== null) {
+        <p class="dist">A {{ km(item.distance) }} de vos</p>
+      } @else if (userPos()) {
+        <p class="dist none">Sin ubicación cargada</p>
       }
+
+      <p class="hours">Hoy: {{ hoy(item.place) }}</p>
+      @if (item.place.description) {
+        <p class="desc">{{ item.place.description }}</p>
+      }
+
+      <div class="card-actions">
+        @if (item.place.phone) {
+          <a class="link" [href]="'tel:' + item.place.phone">Llamar</a>
+        }
+        @if (mapUrl(item.place); as url) {
+          <a class="link" [href]="url" target="_blank" rel="noopener">Cómo llegar</a>
+        }
+      </div>
     </article>
   } @empty {
     @if (!loading()) {

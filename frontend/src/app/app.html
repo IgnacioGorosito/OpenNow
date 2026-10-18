@@ -3,10 +3,26 @@
     <img src="logo-mark.svg" alt="" width="34" height="34" />
     <span class="wordmark">Open<span class="now">Now</span></span>
   </a>
+
   <nav>
-    <a routerLink="/userapp" routerLinkActive="active">Usuario</a>
-    <a routerLink="/owner" routerLinkActive="active">Dueño</a>
-    <a routerLink="/admin" routerLinkActive="active">Admin</a>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Buscar</a>
+
+    @if (auth.user(); as u) {
+      @if (u.role === 'owner') {
+        <a routerLink="/owner" routerLinkActive="active">Mi negocio</a>
+      }
+      @if (u.role === 'admin') {
+        <a routerLink="/admin" routerLinkActive="active">Administración</a>
+      }
+      <span class="user">
+        <span class="avatar">{{ u.name.charAt(0).toUpperCase() }}</span>
+        <span class="who">{{ u.name }}<small>{{ roleLabel(u.role) }}</small></span>
+      </span>
+      <button type="button" class="logout" (click)="logout()">Salir</button>
+    } @else {
+      <a routerLink="/login">Ingresar</a>
+      <a routerLink="/login" [queryParams]="{ modo: 'registro' }" class="cta">Crear cuenta</a>
+    }
   </nav>
 </header>
 

@@ -4,6 +4,8 @@ import { userappRouter } from './src/userapp/userapp.routes';
 import { adminRouter } from './src/admin/admin.routes';
 import { ownerRouter } from './src/owner/owner.routes';
 import { initDB } from './src/db/init';
+import { authRouter } from './src/auth/auth.routes';
+import { requireAuth } from './src/auth/auth.middleware';
 
 const app = express();
 
@@ -21,9 +23,10 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Rutas
+app.use('/api/auth', authRouter);
 app.use('/api/userapp', userappRouter);
-app.use('/api/admin',   adminRouter);
-app.use('/api/owner',   ownerRouter);
+app.use('/api/owner', requireAuth('owner', 'admin'), ownerRouter);
+app.use('/api/admin', requireAuth('admin'), adminRouter);
 
 // Inicializar BD y arrancar servidor
 const PORT = Number(process.env.PORT) || 3000;

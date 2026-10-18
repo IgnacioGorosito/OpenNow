@@ -1,1 +1,132 @@
-<h2>Vista de Dueño</h2>
+<section class="head">
+  <h1>Mi negocio</h1>
+  <p>Hola, {{ ownerName() }}. Cargá tus locales y sus horarios para aparecer en las búsquedas.</p>
+</section>
+
+@if (error()) {
+  <p class="msg error">{{ error() }}</p>
+}
+@if (message()) {
+  <p class="msg ok">{{ message() }}</p>
+}
+
+<div class="layout">
+  <form class="card" (ngSubmit)="guardar()">
+    <h2>{{ editingId ? 'Editar lugar' : 'Nuevo lugar' }}</h2>
+
+    <label>Nombre *
+      <input name="name" [(ngModel)]="form.name" />
+    </label>
+
+    <div class="row">
+      <label>Categoría *
+        <select name="category" [(ngModel)]="form.category_id">
+          <option [ngValue]="null">Elegir…</option>
+          @for (c of categories(); track c.id) {
+            <option [ngValue]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      </label>
+      <label>Localidad *
+        <select name="locality" [(ngModel)]="form.locality_id">
+          <option [ngValue]="null">Elegir…</option>
+          @for (l of localities(); track l.id) {
+            <option [ngValue]="l.id">{{ l.name }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <label>Dirección
+      <input name="address" [(ngModel)]="form.address" />
+    </label>
+
+    <div class="row">
+      <label>Teléfono
+        <input name="phone" [(ngModel)]="form.phone" />
+      </label>
+      <label>Email
+        <input name="email" [(ngModel)]="form.email" />
+      </label>
+    </div>
+
+    <label>Descripción
+      <textarea name="description" rows="3" [(ngModel)]="form.description"></textarea>
+    </label>
+
+    <div class="gps">
+      <div>
+        <strong>Ubicación en el mapa (GPS)</strong>
+        <p class="muted">
+          @if (form.latitude !== null && form.longitude !== null) {
+            Cargada: {{ form.latitude }}, {{ form.longitude }}
+          } @else {
+            Sin ubicación. Pará el GPS en tu local y tocá el botón para que te encuentren por cercanía.
+          }
+        </p>
+      </div>
+      <button type="button" class="btn ghost" (click)="usarMiUbicacion()">Usar mi ubicación actual</button>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn">{{ editingId ? 'Guardar cambios' : 'Crear lugar' }}</button>
+      @if (editingId) {
+        <button type="button" class="btn ghost" (click)="cancelar()">Cancelar</button>
+      }
+    </div>
+  </form>
+
+  <div>
+    <h2>Mis lugares ({{ places().length }})</h2>
+    @for (p of places(); track p.id) {
+      <article class="card place">
+        <div>
+          <strong>{{ p.name }}</strong>
+          <p class="muted">{{ p.category_name }} · {{ p.locality_name }}</p>
+          @if (p.address) {
+            <p class="muted">{{ p.address }}</p>
+          }
+          <p class="muted">{{ p.latitude ? 'Con ubicación GPS' : 'Sin ubicación GPS' }}</p>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn small" (click)="editar(p)">Editar</button>
+          <button type="button" class="btn small ghost" (click)="verHorarios(p)">Horarios</button>
+        </div>
+      </article>
+    } @empty {
+      <p class="muted">Todavía no tenés lugares. Creá el primero.</p>
+    }
+
+    @if (selectedPlace(); as sp) {
+      <section class="card">
+        <h3>Horarios de {{ sp.name }}</h3>
+
+        @for (s of schedules(); track s.id) {
+          <div class="sched">
+            <span>{{ days[s.day_of_week] }}: {{ hora(s.open_time) }} a {{ hora(s.close_time) }}</span>
+            <button type="button" class="btn small danger" (click)="borrarHorario(s)">Borrar</button>
+          </div>
+        } @empty {
+          <p class="muted">Sin horarios cargados.</p>
+        }
+
+        <div class="row add">
+          <label>Día
+            <select name="day" [(ngModel)]="newSchedule.day_of_week">
+              @for (d of days; track $index) {
+                <option [ngValue]="$index">{{ d }}</option>
+              }
+            </select>
+          </label>
+          <label>Abre
+            <input name="open" type="time" [(ngModel)]="newSchedule.open_time" />
+          </label>
+          <label>Cierra
+            <input name="close" type="time" [(ngModel)]="newSchedule.close_time" />
+          </label>
+          <button type="button" class="btn" (click)="agregarHorario()">Agregar</button>
+        </div>
+      </section>
+    }
+  </div>
+</div>

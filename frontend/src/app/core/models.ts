@@ -23,11 +23,11 @@ export interface Place {
   phone: string | null;
   email: string | null;
   description: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: string | null;
+  longitude: string | null;
   owner_name: string | null;
-  category: { id: number; name: string; icon: string | null };
-  locality: { id: number; name: string; province: string | null };
+  category: Category;
+  locality: Locality;
   schedules: Schedule[];
   is_open: boolean;
 }
