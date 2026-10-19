@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   min-height: 560px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 22px;
   overflow: hidden;
@@ -35,14 +35,14 @@
 }
 .switch button.on { background: var(--navy); color: #fff; }
 
-h1 { margin: 0 0 0.2rem; color: var(--navy); font-size: 1.7rem; }
+h1 { margin: 0 0 0.2rem; color: var(--heading); font-size: 1.7rem; }
 .sub { margin: 0 0 1.2rem; color: var(--muted); }
 
 form { display: flex; flex-direction: column; gap: 0.9rem; }
 label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
 input[type='text'], input[type='email'], input[type='password'], input:not([type]) {
   font: inherit; padding: 0.7rem 0.85rem; border: 1px solid var(--border);
-  border-radius: 10px; background: #fff; color: var(--ink);
+  border-radius: 10px; background: var(--surface); color: var(--ink);
 }
 input:focus { outline: 2px solid var(--teal-light); border-color: var(--teal); }
 
@@ -52,9 +52,12 @@ input:focus { outline: 2px solid var(--teal-light); border-color: var(--teal); }
   border: 2px solid var(--border); border-radius: 12px; gap: 0.1rem;
 }
 .role input { position: absolute; opacity: 0; pointer-events: none; }
-.role strong { color: var(--navy); font-size: 0.95rem; }
+.role strong { color: var(--heading); font-size: 0.95rem; }
 .role span { font-weight: 500; font-size: 0.8rem; }
-.role.sel { border-color: var(--teal); background: #E8F6F4; }
+.role.sel {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--teal) 22%, var(--surface));
+}
 
 .btn {
   font: inherit; font-weight: 700; cursor: pointer; border: none;
@@ -65,4 +68,6 @@ input:focus { outline: 2px solid var(--teal-light); border-color: var(--teal); }
 
 .msg { margin: 0; padding: 0.6rem 0.9rem; border-radius: 10px; font-weight: 600; }
 .msg.error { background: #FEE2E2; color: #991B1B; }
+:root[data-theme='dark'] .msg.error { background: #4A1717; color: #FCA5A5; }
 .demo { margin: 1.2rem 0 0; font-size: 0.8rem; color: var(--muted); background: var(--bg); padding: 0.6rem 0.8rem; border-radius: 10px; }
+.auth { animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }

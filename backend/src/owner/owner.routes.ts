@@ -1,17 +1,51 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../db/pool';
+import { AuthPayload, AuthRequest } from '../auth/auth.middleware';
 
 export const ownerRouter = Router();
+
+/* ─────────────────────────────────────────────
+   Helpers de permisos
+   El usuario sale del token (lo pone requireAuth), nunca del body ni de la URL.
+───────────────────────────────────────────── */
+
+function getUser(req: Request): AuthPayload {
+  return (req as AuthRequest).user as AuthPayload;
+}
+
+function toId(value: string | string[] | undefined): number | null {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+// ¿El lugar es del usuario? (el admin puede con todos)
+async function ownsPlace(placeId: number | null, user: AuthPayload): Promise<boolean> {
+  if (placeId === null) return false;
+  if (user.role === 'admin') return true;
+  const r = await pool.query(`SELECT 1 FROM places WHERE id = $1 AND owner_id = $2`, [placeId, user.id]);
+  return r.rows.length > 0;
+}
+
+// ¿El horario pertenece a un lugar del usuario?
+async function ownsSchedule(scheduleId: number | null, user: AuthPayload): Promise<boolean> {
+  if (scheduleId === null) return false;
+  if (user.role === 'admin') return true;
+  const r = await pool.query(
+    `SELECT 1 FROM schedules s JOIN places p ON p.id = s.place_id
+     WHERE s.id = $1 AND p.owner_id = $2`,
+    [scheduleId, user.id]
+  );
+  return r.rows.length > 0;
+}
 
 /* ─────────────────────────────────────────────
    LUGARES DEL DUEÑO
 ───────────────────────────────────────────── */
 
-// GET /api/owner/places?owner_name=Juan
+// GET /api/owner/places  -> solo los lugares del usuario logueado
 ownerRouter.get('/places', async (req: Request, res: Response) => {
   try {
-    const { owner_name } = req.query;
-    if (!owner_name) { res.status(400).json({ error: 'Se requiere el parámetro owner_name' }); return; }
+    const user = getUser(req);
     const result = await pool.query(
       `SELECT
          p.id, p.name, p.address, p.phone, p.email,
@@ -21,24 +55,25 @@ ownerRouter.get('/places', async (req: Request, res: Response) => {
        FROM places p
        JOIN categories c ON c.id = p.category_id
        JOIN localities l ON l.id = p.locality_id
-       WHERE p.owner_name ILIKE $1
+       WHERE p.owner_id = $1
        ORDER BY p.name`,
-      [owner_name]
+      [user.id]
     );
     res.json(result.rows);
   } catch { res.status(500).json({ error: 'Error al obtener lugares' }); }
 });
 
-// POST /api/owner/places
+// POST /api/owner/places  -> el dueño siempre es el usuario del token
 ownerRouter.post('/places', async (req: Request, res: Response) => {
   try {
+    const user = getUser(req);
     const {
       name, address, phone, email, description,
-      latitude, longitude, category_id, locality_id, owner_name,
+      latitude, longitude, category_id, locality_id,
     } = req.body as {
       name: string; address?: string; phone?: string; email?: string;
       description?: string; latitude?: number; longitude?: number;
-      category_id: number; locality_id: number; owner_name?: string;
+      category_id: number; locality_id: number;
     };
 
     if (!name || !category_id || !locality_id) {
@@ -49,11 +84,11 @@ ownerRouter.post('/places', async (req: Request, res: Response) => {
     const result = await pool.query(
       `INSERT INTO places
          (name, address, phone, email, description, latitude, longitude,
-          category_id, locality_id, owner_name)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+          category_id, locality_id, owner_name, owner_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
       [name, address ?? null, phone ?? null, email ?? null, description ?? null,
-       latitude ?? null, longitude ?? null, category_id, locality_id, owner_name ?? null]
+       latitude ?? null, longitude ?? null, category_id, locality_id, user.name, user.id]
     );
     res.status(201).json(result.rows[0]);
   } catch (err: unknown) {
@@ -66,7 +101,11 @@ ownerRouter.post('/places', async (req: Request, res: Response) => {
 // PUT /api/owner/places/:id
 ownerRouter.put('/places/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = toId(req.params.id);
+    if (!(await ownsPlace(id, getUser(req)))) {
+      res.status(404).json({ error: 'Lugar no encontrado' });
+      return;
+    }
     const {
       name, address, phone, email, description,
       latitude, longitude, category_id, locality_id,
@@ -105,7 +144,11 @@ ownerRouter.put('/places/:id', async (req: Request, res: Response) => {
 // GET /api/owner/places/:placeId/schedules
 ownerRouter.get('/places/:placeId/schedules', async (req: Request, res: Response) => {
   try {
-    const { placeId } = req.params;
+    const placeId = toId(req.params.placeId);
+    if (!(await ownsPlace(placeId, getUser(req)))) {
+      res.status(404).json({ error: 'Lugar no encontrado' });
+      return;
+    }
     const result = await pool.query(
       `SELECT id, day_of_week, open_time::text, close_time::text
        FROM schedules WHERE place_id = $1 ORDER BY day_of_week, open_time`,
@@ -119,7 +162,11 @@ ownerRouter.get('/places/:placeId/schedules', async (req: Request, res: Response
 // Body: { day_of_week: 1, open_time: "08:00", close_time: "13:00" }
 ownerRouter.post('/places/:placeId/schedules', async (req: Request, res: Response) => {
   try {
-    const { placeId } = req.params;
+    const placeId = toId(req.params.placeId);
+    if (!(await ownsPlace(placeId, getUser(req)))) {
+      res.status(404).json({ error: 'Lugar no encontrado' });
+      return;
+    }
     const { day_of_week, open_time, close_time } = req.body as {
       day_of_week: number; open_time: string; close_time: string;
     };
@@ -135,7 +182,7 @@ ownerRouter.post('/places/:placeId/schedules', async (req: Request, res: Respons
     res.status(201).json(result.rows[0]);
   } catch (err: unknown) {
     if ((err as { code?: string }).code === '23514')
-      res.status(400).json({ error: 'close_time debe ser posterior a open_time' });
+      res.status(400).json({ error: 'Horario inválido: el día debe ir de 0 a 6 y el cierre debe ser posterior a la apertura' });
     else res.status(500).json({ error: 'Error al crear horario' });
   }
 });
@@ -143,7 +190,11 @@ ownerRouter.post('/places/:placeId/schedules', async (req: Request, res: Respons
 // PUT /api/owner/schedules/:id
 ownerRouter.put('/schedules/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = toId(req.params.id);
+    if (!(await ownsSchedule(id, getUser(req)))) {
+      res.status(404).json({ error: 'Horario no encontrado' });
+      return;
+    }
     const { day_of_week, open_time, close_time } = req.body as {
       day_of_week?: number; open_time?: string; close_time?: string;
     };
@@ -159,7 +210,7 @@ ownerRouter.put('/schedules/:id', async (req: Request, res: Response) => {
     res.json(result.rows[0]);
   } catch (err: unknown) {
     if ((err as { code?: string }).code === '23514')
-      res.status(400).json({ error: 'close_time debe ser posterior a open_time' });
+      res.status(400).json({ error: 'Horario inválido: el día debe ir de 0 a 6 y el cierre debe ser posterior a la apertura' });
     else res.status(500).json({ error: 'Error al actualizar horario' });
   }
 });
@@ -167,7 +218,11 @@ ownerRouter.put('/schedules/:id', async (req: Request, res: Response) => {
 // DELETE /api/owner/schedules/:id
 ownerRouter.delete('/schedules/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = toId(req.params.id);
+    if (!(await ownsSchedule(id, getUser(req)))) {
+      res.status(404).json({ error: 'Horario no encontrado' });
+      return;
+    }
     const result = await pool.query(`DELETE FROM schedules WHERE id = $1 RETURNING id`, [id]);
     if (result.rows.length === 0) { res.status(404).json({ error: 'Horario no encontrado' }); return; }
     res.json({ message: 'Horario eliminado' });
@@ -178,14 +233,19 @@ ownerRouter.delete('/schedules/:id', async (req: Request, res: Response) => {
 // Reemplaza TODOS los horarios de un lugar de una sola vez
 // Body: [{ day_of_week, open_time, close_time }, ...]
 ownerRouter.post('/places/:placeId/schedules/replace', async (req: Request, res: Response) => {
+  const placeId = toId(req.params.placeId);
+  if (!(await ownsPlace(placeId, getUser(req)))) {
+    res.status(404).json({ error: 'Lugar no encontrado' });
+    return;
+  }
+  const schedules = req.body as { day_of_week: number; open_time: string; close_time: string }[];
+  if (!Array.isArray(schedules)) {
+    res.status(400).json({ error: 'El body debe ser un array de horarios' });
+    return;
+  }
+
   const client = await pool.connect();
   try {
-    const { placeId } = req.params;
-    const schedules = req.body as { day_of_week: number; open_time: string; close_time: string }[];
-    if (!Array.isArray(schedules)) {
-      res.status(400).json({ error: 'El body debe ser un array de horarios' });
-      return;
-    }
     await client.query('BEGIN');
     await client.query(`DELETE FROM schedules WHERE place_id = $1`, [placeId]);
     const inserted = [];

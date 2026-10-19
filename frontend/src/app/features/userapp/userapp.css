@@ -18,7 +18,7 @@
 .hero > p { margin: 0 0 1.4rem; color: #C9DCEB; max-width: 560px; }
 
 .finder {
-  background: #fff; color: var(--ink); border-radius: 16px;
+  background: var(--surface); color: var(--ink); border-radius: 16px;
   padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.9rem;
   box-shadow: 0 10px 30px rgba(11, 42, 74, 0.25);
 }
@@ -30,7 +30,7 @@
 .field.radius { min-width: 120px; }
 input:not([type='checkbox']), select {
   font: inherit; padding: 0.6rem 0.75rem; border: 1px solid var(--border);
-  border-radius: 10px; background: #fff; color: var(--ink);
+  border-radius: 10px; background: var(--surface); color: var(--ink);
 }
 input:focus, select:focus { outline: 2px solid var(--teal-light); border-color: var(--teal); }
 
@@ -44,7 +44,7 @@ input:focus, select:focus { outline: 2px solid var(--teal-light); border-color: 
 .chip {
   font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer;
   padding: 0.4rem 0.9rem; border-radius: 999px;
-  border: 1px solid var(--border); background: #fff; color: var(--muted);
+  border: 1px solid var(--border); background: var(--surface); color: var(--muted);
 }
 .chip:hover { border-color: var(--teal); color: var(--teal); }
 .chip.on { background: var(--navy); border-color: var(--navy); color: #fff; }
@@ -62,20 +62,20 @@ input:focus, select:focus { outline: 2px solid var(--teal-light); border-color: 
 .near:disabled { opacity: 0.7; cursor: wait; }
 
 .results-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem; }
-.results-head h2 { margin: 0; color: var(--navy); }
+.results-head h2 { margin: 0; color: var(--heading); }
 .count, .muted, .hint { color: var(--muted); }
 .hint { margin: 0 0 1rem; font-size: 0.88rem; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem; }
 .card {
-  background: #fff; border: 1px solid var(--border); border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
   padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.35rem;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(11, 42, 74, 0.1); }
 .card-top { display: flex; justify-content: space-between; align-items: center; }
 .cat { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal); }
-.card h3 { margin: 0.1rem 0 0; color: var(--navy); font-size: 1.15rem; }
+.card h3 { margin: 0.1rem 0 0; color: var(--heading); font-size: 1.15rem; }
 .card p { margin: 0; }
 .loc { color: var(--muted); font-size: 0.9rem; }
 .dist { color: var(--teal); font-weight: 800; }
@@ -86,9 +86,18 @@ input:focus, select:focus { outline: 2px solid var(--teal-light); border-color: 
 .link {
   text-decoration: none; font-weight: 700; font-size: 0.85rem;
   padding: 0.4rem 0.9rem; border-radius: 999px;
-  border: 1px solid var(--border); color: var(--navy);
+  border: 1px solid var(--border); color: var(--heading);
 }
 .link:hover { border-color: var(--teal); color: var(--teal); }
 
 .msg { padding: 0.6rem 0.9rem; border-radius: 10px; font-weight: 600; margin: 0 0 1rem; }
 .msg.error { background: #FEE2E2; color: #991B1B; }
+.head-right { display: flex; align-items: center; gap: 0.9rem; }
+.view-switch { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px; }
+.view-switch button {
+  font: inherit; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: none;
+  background: transparent; color: var(--muted); padding: 0.35rem 1rem; border-radius: 999px;
+}
+.view-switch button.on { background: var(--navy); color: #fff; }
+.hero { animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.card { animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }

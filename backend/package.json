@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "dist/app.js",
   "scripts": {
+    "test": "vitest run",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/app.js",
     "start:dev": "tsc-watch --noClear -p tsconfig.json --onSuccess \"node dist/app.js\""
@@ -15,7 +16,10 @@
     "@types/express": "^5.0.4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.18.12",
-    "tsc-watch": "^6.3.1"
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.1",
+    "tsc-watch": "^6.3.1",
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "@types/pg": "^8.15.4",

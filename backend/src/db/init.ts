@@ -4,7 +4,6 @@ import * as bcrypt from 'bcryptjs';
 export async function initDB(): Promise<void> {
   const client = await pool.connect();
   try {
-    
     await client.query('BEGIN');
 
     // Categorías de servicios (farmacia, gomería, ferretería, etc.)
@@ -61,6 +60,34 @@ export async function initDB(): Promise<void> {
       );
     `);
 
+    // Usuarios del sistema (login)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id            SERIAL PRIMARY KEY,
+        name          VARCHAR(150) NOT NULL,
+        email         VARCHAR(200) NOT NULL UNIQUE,
+        password_hash VARCHAR(200) NOT NULL,
+        role          VARCHAR(10) NOT NULL DEFAULT 'user'
+                      CHECK (role IN ('user', 'owner', 'admin')),
+        created_at    TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+    // Cada lugar pertenece a un usuario dueño (se toma del token, no del cliente)
+    await client.query(`
+      ALTER TABLE places
+      ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+    `);
+
+    // Asigna los lugares que ya existían a la cuenta de dueño con el mismo nombre
+    await client.query(`
+      UPDATE places p SET owner_id = u.id
+      FROM users u
+      WHERE p.owner_id IS NULL
+        AND u.role = 'owner'
+        AND LOWER(u.name) = LOWER(p.owner_name);
+    `);
+
     // Datos de ejemplo
     await client.query(`
       INSERT INTO categories (name, icon) VALUES
@@ -83,20 +110,8 @@ export async function initDB(): Promise<void> {
         ('Buenos Aires',  'Buenos Aires')
       ON CONFLICT (name, province) DO NOTHING;
     `);
-    // Usuarios del sistema (login)
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id            SERIAL PRIMARY KEY,
-        name          VARCHAR(150) NOT NULL,
-        email         VARCHAR(200) NOT NULL UNIQUE,
-        password_hash VARCHAR(200) NOT NULL,
-        role          VARCHAR(10) NOT NULL DEFAULT 'user'
-                      CHECK (role IN ('user', 'owner', 'admin')),
-        created_at    TIMESTAMPTZ DEFAULT NOW()
-      );
-    `);
 
-    // Admin inicial para desarrollo (cambiar la contraseña antes de entregar a producción)
+    // Admin inicial para desarrollo (cambiar la contraseña antes de entregar)
     const adminHash = await bcrypt.hash('admin123', 10);
     await client.query(
       `INSERT INTO users (name, email, password_hash, role)
@@ -104,6 +119,7 @@ export async function initDB(): Promise<void> {
        ON CONFLICT (email) DO NOTHING`,
       [adminHash]
     );
+
     await client.query('COMMIT');
     console.log('✅ [OpenNow] Base de datos inicializada correctamente');
   } catch (err) {

@@ -72,7 +72,13 @@
 
 <div class="results-head">
   <h2>Resultados</h2>
-  <span class="count">{{ visible().length }} lugares</span>
+  <div class="head-right">
+    <span class="count">{{ visible().length }} lugares</span>
+    <div class="view-switch" role="group" aria-label="Vista">
+      <button type="button" [class.on]="view() === 'list'" (click)="view.set('list')">Lista</button>
+      <button type="button" [class.on]="view() === 'map'" (click)="view.set('map')">Mapa</button>
+    </div>
+  </div>
 </div>
 @if (userPos()) {
   <p class="hint">Ordenados del más cercano al más lejano. Para ver de todas las localidades, dejá Localidad en "Todas".</p>
@@ -81,46 +87,50 @@
   <p class="muted">Buscando…</p>
 }
 
-<div class="cards">
-  @for (item of visible(); track item.place.id) {
-    <article class="card">
-      <div class="card-top">
-        <span class="cat">{{ item.place.category.name }}</span>
-        @if (item.place.is_open) {
-          <span class="badge open">Abierto</span>
-        } @else {
-          <span class="badge closed">Cerrado</span>
+@if (view() === 'map') {
+  <app-places-map [items]="visible()" [userPos]="userPos()" />
+} @else {
+  <div class="cards">
+    @for (item of visible(); track item.place.id) {
+          <article class="card" [style.animation-delay.ms]="($index < 12 ? $index : 12) * 50">
+        <div class="card-top">
+          <span class="cat">{{ item.place.category.name }}</span>
+          @if (item.place.is_open) {
+            <span class="badge open">Abierto</span>
+          } @else {
+            <span class="badge closed">Cerrado</span>
+          }
+        </div>
+
+        <h3>{{ item.place.name }}</h3>
+        <p class="loc">
+          {{ item.place.locality.name }}@if (item.place.address) { · {{ item.place.address }} }
+        </p>
+
+        @if (item.distance !== null) {
+          <p class="dist">A {{ km(item.distance) }} de vos</p>
+        } @else if (userPos()) {
+          <p class="dist none">Sin ubicación cargada</p>
         }
-      </div>
 
-      <h3>{{ item.place.name }}</h3>
-      <p class="loc">
-        {{ item.place.locality.name }}@if (item.place.address) { · {{ item.place.address }} }
-      </p>
+        <p class="hours">Hoy: {{ hoy(item.place) }}</p>
+        @if (item.place.description) {
+          <p class="desc">{{ item.place.description }}</p>
+        }
 
-      @if (item.distance !== null) {
-        <p class="dist">A {{ km(item.distance) }} de vos</p>
-      } @else if (userPos()) {
-        <p class="dist none">Sin ubicación cargada</p>
+        <div class="card-actions">
+          @if (item.place.phone) {
+            <a class="link" [href]="'tel:' + item.place.phone">Llamar</a>
+          }
+          @if (mapUrl(item.place); as url) {
+            <a class="link" [href]="url" target="_blank" rel="noopener">Cómo llegar</a>
+          }
+        </div>
+      </article>
+    } @empty {
+      @if (!loading()) {
+        <p class="muted">No hay lugares con esos filtros.</p>
       }
-
-      <p class="hours">Hoy: {{ hoy(item.place) }}</p>
-      @if (item.place.description) {
-        <p class="desc">{{ item.place.description }}</p>
-      }
-
-      <div class="card-actions">
-        @if (item.place.phone) {
-          <a class="link" [href]="'tel:' + item.place.phone">Llamar</a>
-        }
-        @if (mapUrl(item.place); as url) {
-          <a class="link" [href]="url" target="_blank" rel="noopener">Cómo llegar</a>
-        }
-      </div>
-    </article>
-  } @empty {
-    @if (!loading()) {
-      <p class="muted">No hay lugares con esos filtros.</p>
     }
-  }
-</div>
+  </div>
+}

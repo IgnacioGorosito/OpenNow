@@ -1,0 +1,16 @@
+<div class="places-map">
+  <div #mapEl class="map-canvas"></div>
+
+  <div class="map-legend">
+    <span><i class="dot open"></i> Abierto</span>
+    <span><i class="dot closed"></i> Cerrado</span>
+    <span><i class="dot you"></i> Vos</span>
+  </div>
+
+  @if (withoutLocation() > 0) {
+    <p class="map-note">
+      {{ withoutLocation() }} {{ withoutLocation() === 1 ? 'lugar no tiene' : 'lugares no tienen' }}
+      ubicación GPS y no {{ withoutLocation() === 1 ? 'aparece' : 'aparecen' }} en el mapa.
+    </p>
+  }
+</div>

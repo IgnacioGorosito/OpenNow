@@ -2,15 +2,12 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UserappService } from '../../core/userapp.service';
 import { Category, Locality, Place } from '../../core/models';
-
-interface UserPos {
-  lat: number;
-  lng: number;
-}
+import { Coords, coordsOf, distanceKm, formatKm } from '../../core/geo';
+import { PlacesMap } from '../../shared/places-map/places-map';
 
 @Component({
   selector: 'app-userapp',
-  imports: [FormsModule],
+  imports: [FormsModule, PlacesMap],
   templateUrl: './userapp.html',
   styleUrl: './userapp.css'
 })
@@ -23,8 +20,11 @@ export class Userapp implements OnInit {
   loading = signal(false);
   error = signal('');
 
+  // Vista: lista de tarjetas o mapa
+  view = signal<'list' | 'map'>('list');
+
   // GPS
-  userPos = signal<UserPos | null>(null);
+  userPos = signal<Coords | null>(null);
   locating = signal(false);
   geoMsg = signal('');
   radius = signal(0); // 0 = sin límite
@@ -37,10 +37,10 @@ export class Userapp implements OnInit {
   // Lista final: con ubicación activa se ordena por distancia y se aplica el radio
   visible = computed(() => {
     const pos = this.userPos();
-    const list = this.places().map((place) => ({
-      place,
-      distance: pos ? this.distanceTo(place, pos) : null
-    }));
+    const list = this.places().map((place) => {
+      const c = coordsOf(place);
+      return { place, distance: pos && c ? distanceKm(pos, c) : null };
+    });
     if (!pos) return list;
     const r = this.radius();
     return list
@@ -117,24 +117,8 @@ export class Userapp implements OnInit {
     this.geoMsg.set('');
   }
 
-  // Distancia en km entre el usuario y el lugar (fórmula de Haversine)
-  private distanceTo(p: Place, pos: UserPos): number | null {
-    if (p.latitude === null || p.longitude === null) return null;
-    const lat = Number(p.latitude);
-    const lng = Number(p.longitude);
-    if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
-    const rad = (d: number) => (d * Math.PI) / 180;
-    const dLat = rad(lat - pos.lat);
-    const dLng = rad(lng - pos.lng);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(rad(pos.lat)) * Math.cos(rad(lat)) * Math.sin(dLng / 2) ** 2;
-    return 2 * 6371 * Math.asin(Math.sqrt(a));
-  }
-
   km(d: number): string {
-    if (d < 1) return `${Math.round(d * 1000)} m`;
-    return `${d.toFixed(1).replace('.', ',')} km`;
+    return formatKm(d);
   }
 
   hoy(p: Place): string {
@@ -147,7 +131,8 @@ export class Userapp implements OnInit {
   }
 
   mapUrl(p: Place): string | null {
-    if (p.latitude === null || p.longitude === null) return null;
-    return `https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}`;
+    const c = coordsOf(p);
+    if (!c) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lng}`;
   }
 }
