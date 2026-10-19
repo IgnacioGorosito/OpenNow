@@ -159,14 +159,6 @@ El backend prueba la lógica de **abierto ahora** (bordes de horario, varios ran
 - El diseño "Océano" usa azul marino y turquesa, con verde para *abierto* y rojo para *cerrado*. La paleta está definida con variables CSS; el tema oscuro redefine esas variables mediante `data-theme="dark"` en el elemento `<html>`.
 - Los controles de formulario (incluida la lista desplegable) heredan la tipografía y los colores de la aplicación.
 
-## Próximos pasos
-
-- Separar el backend en capas (rutas, controladores, servicios y repositorios) con inyección de dependencias y validación de entrada.
-- Documentar la API con OpenAPI / Swagger.
-- Dockerfile y `docker-compose` completos, y un pipeline de integración continua con GitHub Actions.
-- Pruebas con mocks, de extremo a extremo y de carga.
-- Favoritos para el rol Usuario.
-
 ## Autor
 
 Ignacio Gorosito — UTN, Desarrollo de Software.
